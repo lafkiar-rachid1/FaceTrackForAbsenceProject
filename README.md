@@ -197,6 +197,3 @@ L'application sera accessible sur http://localhost:5173
 - Hachage des mots de passe avec bcrypt
 - CORS configuré
 - Validation des données avec Pydantic
-
-## Auteur
-ENSET - Projet de gestion des absences
