@@ -16,9 +16,12 @@ const AttendanceHistory = () => {
 
   const fetchAttendance = async () => {
     try {
+      console.log('Current user:', user)
       const data = user.role === 'admin' 
         ? await attendanceService.getAllAttendance()
         : await attendanceService.getUserAttendance(user.id)
+      
+      console.log('Attendance data received:', data)
       
       // Filtrer par période
       const now = new Date()
@@ -32,8 +35,10 @@ const AttendanceHistory = () => {
         filtered = data.filter(a => new Date(a.check_in_time) > monthAgo)
       }
 
+      console.log('Filtered attendance:', filtered)
       setAttendance(filtered)
     } catch (error) {
+      console.error('Error fetching attendance:', error)
       toast.error('Erreur lors du chargement de l\'historique')
     } finally {
       setLoading(false)

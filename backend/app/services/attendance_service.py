@@ -21,11 +21,11 @@ class AttendanceService:
     
     @staticmethod
     def get_all_attendance(db: Session, skip: int = 0, limit: int = 100) -> List[Attendance]:
-        return db.query(Attendance).offset(skip).limit(limit).all()
+        return db.query(Attendance).order_by(Attendance.check_in_time.desc()).offset(skip).limit(limit).all()
     
     @staticmethod
     def get_user_attendance(db: Session, user_id: int) -> List[Attendance]:
-        return db.query(Attendance).filter(Attendance.user_id == user_id).all()
+        return db.query(Attendance).filter(Attendance.user_id == user_id).order_by(Attendance.check_in_time.desc()).all()
     
     @staticmethod
     def get_attendance_by_date(db: Session, attendance_date: date) -> List[Attendance]:

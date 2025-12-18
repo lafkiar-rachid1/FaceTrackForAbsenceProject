@@ -94,31 +94,43 @@ class FaceRecognitionService:
         # Récupérer tous les utilisateurs avec encodage facial
         users = db.query(User).filter(User.face_encoding.isnot(None)).all()
         
+        if not users:
+            raise HTTPException(status_code=404, detail="Aucun visage enregistré dans le système")
+        
         best_match = None
         best_distance = float('inf')
-        threshold = 0.6  # Seuil de similarité (ajustable)
+        threshold = 150.0  # Seuil de similarité ajusté (distance euclidienne)
         
         for user in users:
-            stored_features = np.array(json.loads(user.face_encoding))
-            
-            # Calculer la distance euclidienne
-            distance = np.linalg.norm(test_features - stored_features)
-            
-            if distance < threshold and distance < best_distance:
-                best_distance = distance
-                best_match = user
+            try:
+                stored_features = np.array(json.loads(user.face_encoding))
+                
+                # Calculer la distance euclidienne
+                distance = np.linalg.norm(test_features - stored_features)
+                
+                print(f"User {user.username} (ID: {user.id}): distance = {distance:.2f}")
+                
+                if distance < threshold and distance < best_distance:
+                    best_distance = distance
+                    best_match = user
+            except Exception as e:
+                print(f"Erreur lors de la comparaison avec l'utilisateur {user.id}: {str(e)}")
+                continue
         
         if best_match:
-            confidence = max(0, (1 - best_distance / threshold) * 100)
+            confidence = max(0, min(100, (1 - best_distance / threshold) * 100))
+            print(f"Match trouvé: {best_match.username}, distance: {best_distance:.2f}, confidence: {confidence:.2f}%")
             return {
                 "match": True,
                 "user_id": best_match.id,
                 "username": best_match.username,
                 "full_name": best_match.full_name,
-                "confidence": f"{confidence:.2f}%"
+                "confidence": f"{confidence:.2f}%",
+                "distance": f"{best_distance:.2f}"
             }
         
-        return {"match": False, "message": "Aucune correspondance trouvée"}
+        print(f"Aucune correspondance trouvée. Meilleure distance: {best_distance:.2f}, Seuil: {threshold}")
+        return {"match": False, "message": "Aucune correspondance trouvée", "best_distance": f"{best_distance:.2f}"}
     
     @staticmethod
     async def mark_attendance_with_face(db: Session, file: UploadFile, course_name: str = None):
