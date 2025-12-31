@@ -1,0 +1,174 @@
+"""
+Service de gestion des images faciales et reconnaissance
+"""
+import os
+import base64
+import cv2
+import numpy as np
+from typing import List
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+from datetime import datetime
+
+from models.database_models import Student, TrainingImage
+from models.schemas import FaceCaptureRequest, FaceCaptureResponse
+from config import settings
+
+
+class FaceService:
+    """Service pour gérer la capture et reconnaissance faciale"""
+    
+    @staticmethod
+    def save_face_images(
+        db: Session,
+        student_id: int,
+        images_base64: List[str]
+    ) -> FaceCaptureResponse:
+        """
+        Sauvegarder les images faciales d'un étudiant
+        Cette méthode est appelée après l'inscription d'un étudiant
+        """
+        # Vérifier que l'étudiant existe
+        student = db.query(Student).filter(Student.student_id == student_id).first()
+        if not student:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Étudiant introuvable"
+            )
+        
+        # Créer le dossier pour l'étudiant
+        folder_name = f"{student_id}_{student.full_name.replace(' ', '_')}"
+        dataset_path = os.path.join(settings.DATASET_DIR, folder_name)
+        
+        if not os.path.exists(dataset_path):
+            os.makedirs(dataset_path)
+        
+        # Charger le détecteur de visage
+        face_detector = cv2.CascadeClassifier(
+            cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        )
+        
+        images_saved = 0
+        
+        for idx, img_base64 in enumerate(images_base64):
+            try:
+                # Décoder l'image base64
+                img_data = base64.b64decode(img_base64)
+                nparr = np.frombuffer(img_data, np.uint8)
+                img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                
+                if img is None:
+                    continue
+                
+                # Détecter le visage
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                faces = face_detector.detectMultiScale(gray, 1.3, 5)
+                
+                if len(faces) == 0:
+                    continue  # Pas de visage détecté, on passe
+                
+                # Prendre le plus grand visage
+                (x, y, w, h) = sorted(faces, key=lambda f: f[2]*f[3], reverse=True)[0]
+                face_img = img[y:y+h, x:x+w]
+                
+                # Sauvegarder l'image
+                filename = f"{student.full_name.replace(' ', '_')}_{idx+1}.jpg"
+                file_path = os.path.join(dataset_path, filename)
+                cv2.imwrite(file_path, face_img)
+                
+                # Enregistrer dans la base de données
+                training_image = TrainingImage(
+                    student_id=student_id,
+                    image_path=file_path,
+                    is_verified=True
+                )
+                db.add(training_image)
+                images_saved += 1
+                
+            except Exception as e:
+                print(f"Erreur lors du traitement de l'image {idx}: {e}")
+                continue
+        
+        db.commit()
+        
+        if images_saved < settings.MIN_IMAGES_FOR_TRAINING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Nombre insuffisant d'images valides. Au moins {settings.MIN_IMAGES_FOR_TRAINING} images sont requises."
+            )
+        
+        return FaceCaptureResponse(
+            success=True,
+            message=f"{images_saved} images sauvegardées avec succès",
+            student_id=student_id,
+            images_saved=images_saved,
+            dataset_path=dataset_path
+        )
+    
+    @staticmethod
+    def get_student_images(db: Session, student_id: int) -> List[TrainingImage]:
+        """Obtenir toutes les images d'un étudiant"""
+        return db.query(TrainingImage).filter(
+            TrainingImage.student_id == student_id
+        ).all()
+    
+    @staticmethod
+    def delete_student_images(db: Session, student_id: int) -> dict:
+        """Supprimer toutes les images d'un étudiant"""
+        images = FaceService.get_student_images(db, student_id)
+        
+        # Supprimer les fichiers physiques
+        for image in images:
+            if os.path.exists(image.image_path):
+                try:
+                    os.remove(image.image_path)
+                except Exception as e:
+                    print(f"Erreur lors de la suppression de {image.image_path}: {e}")
+        
+        # Supprimer de la base de données
+        db.query(TrainingImage).filter(
+            TrainingImage.student_id == student_id
+        ).delete()
+        db.commit()
+        
+        return {"message": "Images supprimées avec succès"}
+    
+    @staticmethod
+    def retrain_model():
+        """
+        Réentraîner le modèle de reconnaissance faciale
+        Cette méthode utilise le code existant de train_model.py
+        """
+        try:
+            from train_model import train_model
+            train_model()
+            return {"message": "Modèle réentraîné avec succès"}
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur lors de l'entraînement du modèle: {str(e)}"
+            )
+    
+    @staticmethod
+    def verify_face_image(image_base64: str) -> bool:
+        """Vérifier qu'une image contient un visage valide"""
+        try:
+            # Décoder l'image
+            img_data = base64.b64decode(image_base64)
+            nparr = np.frombuffer(img_data, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if img is None:
+                return False
+            
+            # Détecter le visage
+            face_detector = cv2.CascadeClassifier(
+                cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+            )
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            faces = face_detector.detectMultiScale(gray, 1.3, 5)
+            
+            return len(faces) > 0
+            
+        except Exception:
+            return False
