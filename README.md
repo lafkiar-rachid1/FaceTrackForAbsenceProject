@@ -5,41 +5,6 @@ Application de gestion des absences utilisant la reconnaissance faciale pour aut
 
 ## Architecture du Projet
 
-### Backend (FastAPI)
-- **Framework**: FastAPI
-- **Base de données**: PostgreSQL avec SQLAlchemy
-- **Reconnaissance faciale**: face_recognition + OpenCV
-- **Authentification**: JWT avec python-jose
-
-#### Structure Backend
-```
-backend/
-├── main.py                 # Point d'entrée de l'application
-├── requirements.txt        # Dépendances Python
-├── .env.example           # Variables d'environnement exemple
-└── app/
-    ├── __init__.py
-    ├── config.py          # Configuration de l'app
-    ├── database.py        # Configuration base de données
-    ├── models/            # Modèles SQLAlchemy
-    │   ├── user.py
-    │   └── attendance.py
-    ├── schemas/           # Schémas Pydantic
-    │   ├── user.py
-    │   └── attendance.py
-    ├── services/          # Logique métier
-    │   ├── auth_service.py
-    │   ├── user_service.py
-    │   ├── attendance_service.py
-    │   └── face_service.py
-    └── api/
-        └── routes/        # Routes API
-            ├── auth.py
-            ├── users.py
-            ├── attendance.py
-            └── face_recognition.py
-```
-
 ### Frontend (React + Vite + Tailwind)
 - **Framework**: React 18
 - **Build Tool**: Vite
