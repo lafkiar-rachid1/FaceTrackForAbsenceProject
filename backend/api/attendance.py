@@ -152,7 +152,7 @@ def get_student_stats(
     ).all()
     
     total_sessions = len(attendances)
-    present_count = sum(1 for att in attendances if att.status == "Présent")
+    present_count = sum(1 for att in attendances if att.status in ["Présent", "Present"])
     absent_count = sum(1 for att in attendances if att.status == "Absent")
     
     attendance_percentage = (present_count / total_sessions * 100) if total_sessions > 0 else 0.0
@@ -312,7 +312,7 @@ def recognize_and_mark_attendance(
         Attendance.session_id == recognition_data.session_id
     ).first()
     
-    if existing_attendance and existing_attendance.status == "Présent":
+    if existing_attendance and existing_attendance.status in ["Présent", "Present"]:
         return FaceRecognitionResponse(
             success=False,
             message="Votre présence a déjà été enregistrée pour cette session",
@@ -333,12 +333,13 @@ def recognize_and_mark_attendance(
                 success=False,
                 message=recognition_result["message"],
                 detected_students=[],
-                attendance_marked=[]
+                attendance_marked=[],
+                face_area=recognition_result.get("face_area")
             )
         
         # Marquer la présence
         if existing_attendance:
-            existing_attendance.status = "Présent"
+            existing_attendance.status = "Present"
             existing_attendance.confidence = recognition_result["confidence"]
             existing_attendance.detected_at = datetime.now()
             existing_attendance.detection_method = "facial_recognition"
@@ -347,7 +348,7 @@ def recognize_and_mark_attendance(
             new_attendance = Attendance(
                 student_id=current_student.student_id,
                 session_id=recognition_data.session_id,
-                status="Présent",
+                status="Present",
                 confidence=recognition_result["confidence"],
                 detection_method="facial_recognition"
             )
@@ -359,10 +360,11 @@ def recognize_and_mark_attendance(
             message="Présence enregistrée avec succès",
             detected_students=[{
                 "student_id": current_student.student_id,
-                "full_name": current_student.student.full_name,
+                "full_name": current_student.full_name,
                 "confidence": recognition_result["confidence"]
             }],
-            attendance_marked=[current_student.student_id]
+            attendance_marked=[current_student.student_id],
+            face_area=recognition_result.get("face_area")
         )
         
     except Exception as e:

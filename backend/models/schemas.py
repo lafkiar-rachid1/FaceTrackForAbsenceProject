@@ -17,7 +17,7 @@ class RoleEnum(str, Enum):
 
 
 class StatusEnum(str, Enum):
-    PRESENT = "Présent"
+    PRESENT = "Present"
     ABSENT = "Absent"
 
 
@@ -348,6 +348,7 @@ class FaceRecognitionResponse(BaseModel):
     message: str
     detected_students: List[dict] = []
     attendance_marked: List[int] = []
+    face_area: Optional[dict] = None
 
 
 # ============================================

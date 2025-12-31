@@ -198,25 +198,27 @@ class FaceService:
                     }
                 
                 folder_name = f"{student_id}_{student.full_name.replace(' ', '_')}"
-                dataset_path = os.path.join(settings.DATASET_DIR, folder_name)
+                # Utiliser le dossier racine pour profiter du fichier .pkl global (index)
+                # C'est la même logique que dans recognize_attendance.py
+                global_dataset_path = settings.DATASET_DIR
                 
-                if not os.path.exists(dataset_path) or len(os.listdir(dataset_path)) == 0:
-                    return {
-                        "success": False,
-                        "message": "Aucune image d'entraînement trouvée",
-                        "confidence": 0.0
-                    }
-                
-                # Sauvegarder l'image temporairement
-                temp_path = os.path.join(settings.DATASET_DIR, "temp_recognition.jpg")
+                # Sauvegarder l'image temporaire HORS du dossier dataset pour éviter qu'elle soit indexée
+                # On utilise un fichier unique pour éviter de remplir le disque
+                temp_dir = os.path.join(os.getcwd(), "temp_recognition")
+                if not os.path.exists(temp_dir):
+                    os.makedirs(temp_dir)
+                    
+                temp_path = os.path.join(temp_dir, f"temp_{student_id}.jpg")
                 cv2.imwrite(temp_path, img)
                 
-                # Effectuer la reconnaissance
-                result = DeepFace.find(
+                # Effectuer la reconnaissance sur TOUTE la base
+                results = DeepFace.find(
                     img_path=temp_path,
-                    db_path=dataset_path,
-                    model_name=settings.FACE_MODEL,
-                    enforce_detection=False
+                    db_path=global_dataset_path,
+                    model_name="Facenet",  # Doit correspondre au fichier .pkl
+                    detector_backend="opencv",
+                    enforce_detection=False,
+                    silent=True
                 )
                 
                 # Nettoyer le fichier temporaire
@@ -224,23 +226,52 @@ class FaceService:
                     os.remove(temp_path)
                 
                 # Analyser le résultat
-                if len(result) > 0 and len(result[0]) > 0:
-                    # Visage reconnu
-                    # La distance est inversement proportionnelle à la confiance
-                    distance = result[0].iloc[0]['distance'] if 'distance' in result[0].columns else 1.0
-                    confidence = max(0.0, 1.0 - distance)  # Convertir distance en confiance
-                    
-                    if confidence >= 0.4:  # Seuil de confiance
-                        return {
-                            "success": True,
-                            "message": "Visage reconnu",
-                            "confidence": round(confidence, 2)
-                        }
-                
+                for df in results:
+                    if not df.empty:
+                        # DeepFace peut retourner plusieurs matchs, on prend le meilleur
+                        best_match = df.iloc[0]
+                        identity_path = best_match['identity']
+                        
+                        # Vérifier si l'identité trouvée correspond à notre étudiant
+                        if folder_name in identity_path:
+                            # Visage reconnu et correspond à l'étudiant !
+                            distance = best_match['distance'] if 'distance' in best_match else 0.0
+                            # Conversion explicite en float standard pour éviter l'erreur SQLAlchemy avec numpy.float64
+                            confidence = float(max(0.0, 1.0 - distance))
+                            
+                            # Extraire les coordonnées du visage pour le frontend
+                            face_area = None
+                            if 'source_x' in best_match:
+                                face_area = {
+                                    "x": int(best_match['source_x']),
+                                    "y": int(best_match['source_y']),
+                                    "w": int(best_match['source_w']),
+                                    "h": int(best_match['source_h'])
+                                }
+                            
+                            if confidence >= 0.4:
+                                return {
+                                    "success": True,
+                                    "message": "Visage reconnu",
+                                    "confidence": round(confidence, 2),
+                                    "face_area": face_area
+                                }
+                        else:
+                            # Visage reconnu mais c'est quelqu'un d'autre !
+                            recognized_name = identity_path.split(os.sep)[-2] # Extrait le nom du dossier
+                            print(f"[AUTH FAIL] Reconnu comme {recognized_name} au lieu de {folder_name}")
+                            return {
+                                "success": False,
+                                "message": f"Identité incorrecte. Reconnu comme: {recognized_name}",
+                                "confidence": 0.0,
+                                "face_area": face_area
+                            }
+
                 return {
                     "success": False,
-                    "message": "Visage non reconnu ou confiance trop faible",
-                    "confidence": 0.0
+                    "message": "Visage non reconnu ou ne correspond pas à votre profil",
+                    "confidence": 0.0,
+                    "face_area": None
                 }
                 
             except Exception as e:
