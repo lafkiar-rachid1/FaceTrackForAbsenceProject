@@ -275,7 +275,7 @@ class AttendanceStats(BaseModel):
 # ============================================
 # Enrollment Schemas
 # ============================================
-class EnrollmentCreate(BaseModel):
+class CourseEnrollmentCreate(BaseModel):
     student_id: int
     course_id: int
 
@@ -369,3 +369,19 @@ class ProfessorDashboard(BaseModel):
     total_sessions: int
     upcoming_sessions: List[SessionWithCourse]
     recent_attendances: List[AttendanceWithDetails]
+
+
+class AdminStatsResponse(BaseModel):
+    total_students: int
+    total_professors: int
+    total_courses: int
+    total_sessions: int
+    active_students: int
+    active_courses: int
+
+
+class ProfessorStatsResponse(BaseModel):
+    total_courses: int
+    total_sessions: int
+    upcoming_sessions: int
+    students_enrolled: int

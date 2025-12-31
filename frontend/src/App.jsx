@@ -4,9 +4,11 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './store';
 import { Navbar, ProtectedRoute } from './components';
 import { Home, Login, Register, StudentDashboard } from './pages';
+import AdminDashboard from './pages/AdminDashboard';
+import ProfessorDashboard from './pages/ProfessorDashboard';
 
 function AppRoutes() {
-  const { isAuthenticated, userType } = useAuth();
+  const { isAuthenticated, userType, user } = useAuth();
 
   return (
     <>
@@ -30,9 +32,13 @@ function AppRoutes() {
             <ProtectedRoute>
               {userType === 'student' ? (
                 <StudentDashboard />
+              ) : user?.role === 'admin' ? (
+                <AdminDashboard />
+              ) : user?.role === 'prof' ? (
+                <ProfessorDashboard />
               ) : (
                 <div className="container mx-auto px-4 py-8">
-                  <h1 className="text-2xl font-bold">Dashboard Admin/Prof (à implémenter)</h1>
+                  <h1 className="text-2xl font-bold">Dashboard non disponible</h1>
                 </div>
               )}
             </ProtectedRoute>

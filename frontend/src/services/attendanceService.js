@@ -87,6 +87,30 @@ const attendanceService = {
       throw error.response?.data || { detail: 'Erreur lors de la suppression de la présence' };
     }
   },
+
+  /**
+   * Obtenir les sessions disponibles pour marquer la présence
+   */
+  getAvailableSessions: async () => {
+    try {
+      const response = await api.get('/attendance/sessions/available');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Erreur lors de la récupération des sessions' };
+    }
+  },
+
+  /**
+   * Reconnaissance faciale et marquage de présence
+   */
+  recognizeAndMarkAttendance: async (data) => {
+    try {
+      const response = await api.post('/attendance/recognize', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { detail: 'Erreur lors de la reconnaissance faciale' };
+    }
+  },
 };
 
 export default attendanceService;

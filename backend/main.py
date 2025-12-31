@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 
 from config import settings
 from database import init_db
-from api import auth, students, attendance
+from api import auth, students, attendance, admin, professor
 
 
 @asynccontextmanager
@@ -76,6 +76,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(students.router)
 app.include_router(attendance.router)
+app.include_router(admin.router)
+app.include_router(professor.router)
 
 
 # Route de base

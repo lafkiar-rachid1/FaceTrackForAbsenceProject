@@ -150,6 +150,115 @@ class FaceService:
             )
     
     @staticmethod
+    def recognize_face(db: Session, image_base64: str, student_id: int) -> dict:
+        """
+        Reconnaître un visage à partir d'une image base64
+        Retourne le résultat de la reconnaissance avec la confiance
+        """
+        try:
+            # Décoder l'image base64
+            img_data = base64.b64decode(image_base64)
+            nparr = np.frombuffer(img_data, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if img is None:
+                return {
+                    "success": False,
+                    "message": "Image invalide",
+                    "confidence": 0.0
+                }
+            
+            # Charger le détecteur de visage
+            face_detector = cv2.CascadeClassifier(
+                cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+            )
+            
+            # Détecter les visages
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            faces = face_detector.detectMultiScale(gray, 1.3, 5)
+            
+            if len(faces) == 0:
+                return {
+                    "success": False,
+                    "message": "Aucun visage détecté",
+                    "confidence": 0.0
+                }
+            
+            # Utiliser DeepFace pour la reconnaissance
+            try:
+                from deepface import DeepFace
+                
+                # Obtenir le chemin du dataset de l'étudiant
+                student = db.query(Student).filter(Student.student_id == student_id).first()
+                if not student:
+                    return {
+                        "success": False,
+                        "message": "Étudiant introuvable",
+                        "confidence": 0.0
+                    }
+                
+                folder_name = f"{student_id}_{student.full_name.replace(' ', '_')}"
+                dataset_path = os.path.join(settings.DATASET_DIR, folder_name)
+                
+                if not os.path.exists(dataset_path) or len(os.listdir(dataset_path)) == 0:
+                    return {
+                        "success": False,
+                        "message": "Aucune image d'entraînement trouvée",
+                        "confidence": 0.0
+                    }
+                
+                # Sauvegarder l'image temporairement
+                temp_path = os.path.join(settings.DATASET_DIR, "temp_recognition.jpg")
+                cv2.imwrite(temp_path, img)
+                
+                # Effectuer la reconnaissance
+                result = DeepFace.find(
+                    img_path=temp_path,
+                    db_path=dataset_path,
+                    model_name=settings.FACE_MODEL,
+                    enforce_detection=False
+                )
+                
+                # Nettoyer le fichier temporaire
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                
+                # Analyser le résultat
+                if len(result) > 0 and len(result[0]) > 0:
+                    # Visage reconnu
+                    # La distance est inversement proportionnelle à la confiance
+                    distance = result[0].iloc[0]['distance'] if 'distance' in result[0].columns else 1.0
+                    confidence = max(0.0, 1.0 - distance)  # Convertir distance en confiance
+                    
+                    if confidence >= 0.4:  # Seuil de confiance
+                        return {
+                            "success": True,
+                            "message": "Visage reconnu",
+                            "confidence": round(confidence, 2)
+                        }
+                
+                return {
+                    "success": False,
+                    "message": "Visage non reconnu ou confiance trop faible",
+                    "confidence": 0.0
+                }
+                
+            except Exception as e:
+                print(f"Erreur DeepFace: {e}")
+                return {
+                    "success": False,
+                    "message": f"Erreur lors de la reconnaissance: {str(e)}",
+                    "confidence": 0.0
+                }
+                
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erreur lors du traitement de l'image: {str(e)}",
+                "confidence": 0.0
+            }
+    
+    @staticmethod
     def verify_face_image(image_base64: str) -> bool:
         """Vérifier qu'une image contient un visage valide"""
         try:

@@ -13,11 +13,17 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       try {
         if (authService.isAuthenticated()) {
-          const storedUser = authService.getStoredUser();
           const storedType = authService.getUserType();
-          
-          setUser(storedUser);
           setUserType(storedType);
+          
+          // Recharger les données utilisateur avec le rôle
+          if (storedType === 'student') {
+            const studentData = await authService.getCurrentStudent();
+            setUser({...studentData, role: 'student'});
+          } else {
+            const userData = await authService.getCurrentUser();
+            setUser({...userData, role: userData.role});
+          }
           
           // Vérifier le token
           const isValid = await authService.verifyToken();
@@ -30,6 +36,8 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('Erreur lors de l\'initialisation:', error);
         authService.logout();
+        setUser(null);
+        setUserType(null);
       } finally {
         setLoading(false);
       }
@@ -45,12 +53,13 @@ export const AuthProvider = ({ children }) => {
       if (type === 'student') {
         response = await authService.loginStudent(username, password);
         const studentData = await authService.getCurrentStudent();
-        setUser(studentData);
+        setUser({...studentData, role: 'student'});
         setUserType('student');
       } else {
         response = await authService.loginUser(username, password);
         const userData = await authService.getCurrentUser();
-        setUser(userData);
+        // Le backend retourne déjà le role (admin ou prof)
+        setUser({...userData, role: userData.role});
         setUserType('user');
       }
       

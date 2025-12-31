@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../store';
 import { attendanceService, studentService } from '../services';
 import { LoadingSpinner } from '../components';
+import MarkAttendance from '../components/MarkAttendance';
 
 const StudentDashboard = () => {
   const { user, refreshUser } = useAuth();
@@ -9,6 +10,7 @@ const StudentDashboard = () => {
   const [attendances, setAttendances] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showMarkAttendance, setShowMarkAttendance] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -37,6 +39,11 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleAttendanceMarked = () => {
+    setShowMarkAttendance(false);
+    loadDashboardData();
+  };
+
   if (loading) {
     return <LoadingSpinner fullScreen />;
   }
@@ -46,11 +53,28 @@ const StudentDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Bonjour, {user?.full_name} 👋
-          </h1>
-          <p className="text-gray-600">Bienvenue sur votre tableau de bord</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Bonjour, {user?.full_name} 👋
+              </h1>
+              <p className="text-gray-600">Tableau de bord étudiant</p>
+            </div>
+            <button
+              onClick={() => setShowMarkAttendance(!showMarkAttendance)}
+              className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 font-medium"
+            >
+              {showMarkAttendance ? 'Masquer' : 'Marquer ma Présence'}
+            </button>
+          </div>
         </div>
+
+        {/* Mark Attendance Component */}
+        {showMarkAttendance && (
+          <div className="mb-6">
+            <MarkAttendance onSuccess={handleAttendanceMarked} />
+          </div>
+        )}
 
         {/* Profile Info */}
         <div className="grid md:grid-cols-3 gap-6 mb-6">

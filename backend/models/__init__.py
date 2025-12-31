@@ -15,11 +15,12 @@ from .schemas import (
     CourseCreate, CourseResponse, CourseWithProfessor,
     SessionCreate, SessionResponse, SessionWithCourse,
     AttendanceCreate, AttendanceResponse, AttendanceWithDetails, AttendanceStats,
-    EnrollmentCreate, EnrollmentResponse,
+    CourseEnrollmentCreate, EnrollmentResponse,
     LogCreate, LogResponse,
     NotificationCreate, NotificationResponse,
     FaceRecognitionRequest, FaceRecognitionResponse,
-    StudentDashboard, ProfessorDashboard
+    StudentDashboard, ProfessorDashboard,
+    AdminStatsResponse, ProfessorStatsResponse
 )
 
 __all__ = [
@@ -37,9 +38,10 @@ __all__ = [
     "CourseCreate", "CourseResponse", "CourseWithProfessor",
     "SessionCreate", "SessionResponse", "SessionWithCourse",
     "AttendanceCreate", "AttendanceResponse", "AttendanceWithDetails", "AttendanceStats",
-    "EnrollmentCreate", "EnrollmentResponse",
+    "CourseEnrollmentCreate", "EnrollmentResponse",
     "LogCreate", "LogResponse",
     "NotificationCreate", "NotificationResponse",
     "FaceRecognitionRequest", "FaceRecognitionResponse",
-    "StudentDashboard", "ProfessorDashboard"
+    "StudentDashboard", "ProfessorDashboard",
+    "AdminStatsResponse", "ProfessorStatsResponse"
 ]
