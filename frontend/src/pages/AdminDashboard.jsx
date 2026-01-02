@@ -150,11 +150,11 @@ const AdminDashboard = () => {
           sidebarOpen={sidebarOpen} 
         />
 
-        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-          <div className="p-6">
+        <main className={`flex-1 transition-all duration-500 ${sidebarOpen ? 'ml-72' : 'ml-0'}`}>
+          <div className="p-8">
             {activeTab === 'overview' && <StatsCards stats={stats} />}
 
-            <div className="bg-white shadow-lg rounded-xl p-6">
+            <div className="backdrop-blur-xl bg-white/90 shadow-2xl shadow-indigo-500/10 rounded-3xl p-8 border border-gray-200/50">
               {activeTab === 'professors' && (
                 <ProfessorsTab 
                   professors={professors} 
