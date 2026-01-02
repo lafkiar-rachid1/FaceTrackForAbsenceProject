@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store';
 import professorService from '../services/professorService';
 import HeaderProfessor from '../components/professor/HeaderProfessor';
+import SideBarProfessor from '../components/professor/SideBarProfessor';
+import StatsCardsProfessor from '../components/professor/StatsCardsProfessor';
+import CoursesTabProfessor from '../components/professor/CoursesTabProfessor';
+import SessionsTab from '../components/professor/SessionsTab';
 
 const ProfessorDashboard = () => {
   const navigate = useNavigate();
@@ -11,7 +15,9 @@ const ProfessorDashboard = () => {
   const [stats, setStats] = useState(null);
   const [courses, setCourses] = useState([]);
   const [sessions, setSessions] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionForm, setSessionForm] = useState({
     course_id: '',
@@ -27,6 +33,7 @@ const ProfessorDashboard = () => {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       const [statsRes, coursesRes, sessionsRes] = await Promise.all([
         professorService.getStats(),
         professorService.getMyCourses(),
@@ -36,7 +43,9 @@ const ProfessorDashboard = () => {
       setCourses(coursesRes.data);
       setSessions(sessionsRes.data);
     } catch (error) {
-      toast.error('Erreur lors du chargement');
+      toast.error('Erreur lors du chargement des données');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,114 +79,72 @@ const ProfessorDashboard = () => {
     navigate('/login');
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <HeaderProfessor user={user} onLogout={handleLogout} />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <HeaderProfessor 
+        user={user} 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen}
+        onLogout={handleLogout} 
+      />
 
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Mes Cours</p>
-              <p className="text-2xl font-bold">{stats.total_courses}</p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Sessions Totales</p>
-              <p className="text-2xl font-bold">{stats.total_sessions}</p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Sessions à Venir</p>
-              <p className="text-2xl font-bold">{stats.upcoming_sessions}</p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Étudiants Inscrits</p>
-              <p className="text-2xl font-bold">{stats.students_enrolled}</p>
-            </div>
-          </div>
-        )}
+      <div className="flex">
+        <SideBarProfessor 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          sidebarOpen={sidebarOpen} 
+        />
 
-        {/* Create Session Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowSessionModal(true)}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 font-medium"
-          >
-            Créer une Session
-          </button>
-        </div>
+        <main className={`flex-1 transition-all duration-500 ${sidebarOpen ? 'ml-72' : 'ml-0'}`}>
+          <div className="p-8">
+            {activeTab === 'overview' && <StatsCardsProfessor stats={stats} />}
 
-        {/* Courses */}
-        <div className="bg-white rounded-lg shadow mb-6 p-6">
-          <h2 className="text-xl font-semibold mb-4">Mes Cours</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {courses.map((course) => (
-              <div key={course.course_id} className="border rounded-lg p-4">
-                <h3 className="font-semibold">{course.course_name}</h3>
-                <p className="text-sm text-gray-500">Code: {course.course_code}</p>
-                <p className="text-sm text-gray-600 mt-2">{course.description}</p>
+            {activeTab !== 'overview' && (
+              <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-lg">
+                {activeTab === 'courses' && (
+                  <CoursesTabProfessor courses={courses} />
+                )}
+
+                {activeTab === 'sessions' && (
+                  <SessionsTab 
+                    sessions={sessions}
+                    courses={courses}
+                    onCreateSession={() => setShowSessionModal(true)}
+                    onCompleteSession={handleCompleteSession}
+                  />
+                )}
               </div>
-            ))}
+            )}
           </div>
-        </div>
-
-        {/* Sessions */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Mes Sessions</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Heure</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lieu</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sessions.map((session) => (
-                  <tr key={session.session_id}>
-                    <td className="px-6 py-4 text-sm">{new Date(session.session_date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm">{session.start_time} - {session.end_time}</td>
-                    <td className="px-6 py-4 text-sm">{session.location}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        session.is_completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {session.is_completed ? 'Terminée' : 'En cours'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      {!session.is_completed && (
-                        <button
-                          onClick={() => handleCompleteSession(session.session_id)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          Terminer
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        </main>
       </div>
 
       {/* Session Modal */}
       {showSessionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Créer une Session</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-gray-200">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-3 rounded-xl bg-indigo-100">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Créer une Session</h2>
+            </div>
             <form onSubmit={handleCreateSession}>
               <div className="space-y-4">
                 <select
                   value={sessionForm.course_id}
                   onChange={(e) => setSessionForm({...sessionForm, course_id: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none font-medium"
                   required
                 >
                   <option value="">Sélectionner un cours</option>
@@ -191,7 +158,7 @@ const ProfessorDashboard = () => {
                   type="date"
                   value={sessionForm.session_date}
                   onChange={(e) => setSessionForm({...sessionForm, session_date: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none font-medium"
                   required
                 />
                 <input
@@ -199,7 +166,7 @@ const ProfessorDashboard = () => {
                   placeholder="Heure de début"
                   value={sessionForm.start_time}
                   onChange={(e) => setSessionForm({...sessionForm, start_time: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none font-medium"
                   required
                 />
                 <input
@@ -207,7 +174,7 @@ const ProfessorDashboard = () => {
                   placeholder="Heure de fin"
                   value={sessionForm.end_time}
                   onChange={(e) => setSessionForm({...sessionForm, end_time: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none font-medium"
                   required
                 />
                 <input
@@ -215,20 +182,20 @@ const ProfessorDashboard = () => {
                   placeholder="Lieu"
                   value={sessionForm.location}
                   onChange={(e) => setSessionForm({...sessionForm, location: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none font-medium"
                 />
               </div>
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="flex justify-end space-x-3 mt-8">
                 <button
                   type="button"
                   onClick={() => setShowSessionModal(false)}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
+                  className="px-6 py-2.5 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-semibold text-gray-700 transition-all"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl"
                 >
                   Créer
                 </button>

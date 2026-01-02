@@ -2,22 +2,16 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './store';
-import { Navbar, ProtectedRoute } from './components';
+import { ProtectedRoute } from './components';
 import { Home, Login, Register, StudentDashboard } from './pages';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfessorDashboard from './pages/ProfessorDashboard';
 
 function AppRoutes() {
   const { isAuthenticated, userType, user } = useAuth();
-  
-  // Determine if we're on a dashboard route
-  const isDashboardRoute = window.location.pathname === '/dashboard';
 
   return (
-    <>
-      {/* Only show Navbar on non-dashboard routes */}
-      {!isDashboardRoute && <Navbar />}
-      <Routes>
+    <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route 
@@ -52,7 +46,6 @@ function AppRoutes() {
         {/* Redirect unknown routes */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
   );
 }
 
