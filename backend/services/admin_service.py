@@ -94,6 +94,56 @@ class AdminService:
         return professors
     
     @staticmethod
+    def update_professor(db: Session, professor_id: int, professor_data: UserCreate):
+        """Mettre à jour un professeur"""
+        professor = db.query(User).filter(User.user_id == professor_id).first()
+        if not professor:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Professeur introuvable"
+            )
+        
+        # Vérifier si le username est déjà utilisé par un autre utilisateur
+        if professor_data.username != professor.username:
+            existing_user = db.query(User).filter(User.username == professor_data.username).first()
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Ce nom d'utilisateur existe déjà"
+                )
+        
+        professor.username = professor_data.username
+        professor.full_name = professor_data.full_name
+        if professor_data.password:
+            professor.password_hash = get_password_hash(professor_data.password)
+        
+        db.commit()
+        db.refresh(professor)
+        
+        return professor
+    
+    @staticmethod
+    def delete_professor(db: Session, professor_id: int):
+        """Supprimer un professeur"""
+        professor = db.query(User).filter(User.user_id == professor_id).first()
+        if not professor:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Professeur introuvable"
+            )
+        
+        # Vérifier si le professeur a des cours
+        courses = db.query(Course).filter(Course.prof_id == professor_id).count()
+        if courses > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Impossible de supprimer un professeur qui a des cours assignés"
+            )
+        
+        db.delete(professor)
+        db.commit()
+    
+    @staticmethod
     def create_course(db: Session, course_data: CourseCreate):
         """Créer un nouveau cours"""
         # Vérifier que le professeur existe
@@ -255,3 +305,46 @@ class AdminService:
                 })
         
         return students
+    
+    @staticmethod
+    def get_all_enrollments(db: Session):
+        """Obtenir tous les cours avec leurs étudiants inscrits"""
+        courses = db.query(Course).filter(Course.is_active == True).all()
+        
+        enrollments_data = []
+        for course in courses:
+            # Récupérer le professeur
+            professor = db.query(User).filter(User.user_id == course.prof_id).first()
+            
+            # Récupérer les inscriptions pour ce cours
+            enrollments = db.query(CourseEnrollment).filter(
+                CourseEnrollment.course_id == course.course_id
+            ).all()
+            
+            students = []
+            for enrollment in enrollments:
+                student = db.query(Student).filter(
+                    Student.student_id == enrollment.student_id
+                ).first()
+                if student:
+                    students.append({
+                        "enrollment_id": enrollment.enrollment_id,
+                        "student_id": student.student_id,
+                        "full_name": student.full_name,
+                        "email": student.email,
+                        "enrollment_number": student.enrollment_number,
+                        "enrolled_at": enrollment.enrolled_at.isoformat() if enrollment.enrolled_at else None
+                    })
+            
+            enrollments_data.append({
+                "course_id": course.course_id,
+                "course_name": course.course_name,
+                "course_code": course.course_code,
+                "description": course.description,
+                "credits": course.credits,
+                "professor_name": professor.full_name if professor else None,
+                "students_count": len(students),
+                "students": students
+            })
+        
+        return enrollments_data

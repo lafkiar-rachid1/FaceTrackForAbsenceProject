@@ -45,6 +45,28 @@ def get_all_professors(
     return AdminService.get_all_professors(db)
 
 
+@router.put("/professors/{professor_id}", response_model=UserResponse)
+def update_professor(
+    professor_id: int,
+    professor_data: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("admin"))
+):
+    """Mettre à jour un professeur"""
+    return AdminService.update_professor(db, professor_id, professor_data)
+
+
+@router.delete("/professors/{professor_id}")
+def delete_professor(
+    professor_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("admin"))
+):
+    """Supprimer un professeur"""
+    AdminService.delete_professor(db, professor_id)
+    return {"message": "Professeur supprimé avec succès"}
+
+
 @router.post("/courses", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
 def create_course(
     course_data: CourseCreate,
@@ -115,3 +137,12 @@ def get_course_students(
 ):
     """Obtenir les étudiants inscrits à un cours"""
     return AdminService.get_course_students(db, course_id)
+
+
+@router.get("/enrollments")
+def get_all_enrollments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("admin"))
+):
+    """Obtenir tous les cours avec leurs étudiants inscrits"""
+    return AdminService.get_all_enrollments(db)

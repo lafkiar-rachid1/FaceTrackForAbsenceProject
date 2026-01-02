@@ -46,14 +46,14 @@ const SideBarAdmin = ({ activeTab, setActiveTab, sidebarOpen }) => {
 
   return (
     <aside
-      className={`fixed left-0 top-[89px] h-[calc(100vh-89px)] backdrop-blur-2xl bg-white/90 border-r border-gray-200/50 transition-all duration-500 ease-in-out z-20 ${
-        sidebarOpen ? 'w-72 shadow-2xl shadow-indigo-500/10' : 'w-0'
+      className={`fixed left-0 top-[89px] h-[calc(100vh-89px)] bg-white border-r border-gray-200 transition-all duration-500 ease-in-out z-20 ${
+        sidebarOpen ? 'w-72 shadow-lg' : 'w-0'
       } overflow-hidden`}
     >
       <div className="p-6 h-full flex flex-col">
         <div className="mb-8">
           <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Menu</h2>
-          <div className="h-1 w-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+          <div className="h-1 w-12 bg-indigo-600 rounded-full"></div>
         </div>
         
         <nav className="space-y-3 flex-1">
@@ -61,57 +61,35 @@ const SideBarAdmin = ({ activeTab, setActiveTab, sidebarOpen }) => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`group relative w-full flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all duration-300 overflow-hidden ${
+              className={`w-full flex items-center space-x-4 px-5 py-4 rounded-xl transition-all ${
                 activeTab === item.id
-                  ? 'shadow-xl shadow-indigo-500/30'
-                  : 'hover:bg-gray-50/80 hover:shadow-lg'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'hover:bg-gray-100'
               }`}
             >
-              {/* Background gradient pour l'élément actif */}
-              {activeTab === item.id && (
-                <>
-                  <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-100`}></div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
-                </>
-              )}
-              
-              {/* Effet hover pour les éléments inactifs */}
-              {activeTab !== item.id && (
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              )}
-              
-              {/* Icône */}
-              <div className={`relative z-10 p-2.5 rounded-xl transition-all duration-300 ${
+              <div className={`p-2.5 rounded-lg ${
                 activeTab === item.id 
-                  ? 'bg-white/20 text-white shadow-lg' 
-                  : `bg-gradient-to-br ${item.gradient} text-white group-hover:scale-110 group-hover:shadow-lg`
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-indigo-100 text-indigo-600'
               }`}>
                 {item.icon}
               </div>
-              
-              {/* Label */}
-              <span className={`relative z-10 font-bold text-base transition-colors ${
+              <span className={`font-semibold text-base ${
                 activeTab === item.id 
                   ? 'text-white' 
-                  : 'text-gray-700 group-hover:text-gray-900'
+                  : 'text-gray-700'
               }`}>
                 {item.label}
               </span>
-              
-              {/* Indicateur actif */}
-              {activeTab === item.id && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full shadow-lg animate-pulse"></div>
-              )}
             </button>
           ))}
         </nav>
         
-        {/* Footer décoratif */}
-        <div className="mt-6 pt-6 border-t border-gray-200/50">
+        <div className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex items-center justify-center space-x-2 text-gray-400">
-            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse"></div>
+            <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
             <span className="text-xs font-medium">Admin Panel</span>
-            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
+            <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
           </div>
         </div>
       </div>
