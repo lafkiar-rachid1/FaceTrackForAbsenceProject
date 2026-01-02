@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../store';
 import professorService from '../services/professorService';
+import HeaderProfessor from '../components/professor/HeaderProfessor';
 
 const ProfessorDashboard = () => {
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const [stats, setStats] = useState(null);
   const [courses, setCourses] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -60,10 +65,16 @@ const ProfessorDashboard = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard Professeur</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <HeaderProfessor user={user} onLogout={handleLogout} />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Stats */}
         {stats && (

@@ -9,10 +9,14 @@ import ProfessorDashboard from './pages/ProfessorDashboard';
 
 function AppRoutes() {
   const { isAuthenticated, userType, user } = useAuth();
+  
+  // Determine if we're on a dashboard route
+  const isDashboardRoute = window.location.pathname === '/dashboard';
 
   return (
     <>
-      <Navbar />
+      {/* Only show Navbar on non-dashboard routes */}
+      {!isDashboardRoute && <Navbar />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />

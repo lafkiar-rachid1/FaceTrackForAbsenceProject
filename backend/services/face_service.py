@@ -49,6 +49,9 @@ class FaceService:
         )
         
         images_saved = 0
+        images_rejected = 0
+        
+        print(f"[FaceService] Traitement de {len(images_base64)} images pour l'étudiant {student_id}")
         
         for idx, img_base64 in enumerate(images_base64):
             try:
@@ -58,13 +61,18 @@ class FaceService:
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 
                 if img is None:
+                    print(f"[FaceService] Image {idx+1}: Décodage échoué")
+                    images_rejected += 1
                     continue
                 
-                # Détecter le visage
+                # Détecter le visage avec des paramètres assouplis
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_detector.detectMultiScale(gray, 1.3, 5)
+                # Paramètres assouplis: scaleFactor=1.1 (au lieu de 1.3), minNeighbors=3 (au lieu de 5)
+                faces = face_detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3, minSize=(30, 30))
                 
                 if len(faces) == 0:
+                    print(f"[FaceService] Image {idx+1}: Aucun visage détecté")
+                    images_rejected += 1
                     continue  # Pas de visage détecté, on passe
                 
                 # Prendre le plus grand visage
@@ -84,17 +92,21 @@ class FaceService:
                 )
                 db.add(training_image)
                 images_saved += 1
+                print(f"[FaceService] Image {idx+1}: Sauvegardée avec succès")
                 
             except Exception as e:
-                print(f"Erreur lors du traitement de l'image {idx}: {e}")
+                print(f"[FaceService] Erreur lors du traitement de l'image {idx+1}: {e}")
+                images_rejected += 1
                 continue
         
         db.commit()
         
+        print(f"[FaceService] Résultat: {images_saved} images sauvegardées, {images_rejected} rejetées")
+        
         if images_saved < settings.MIN_IMAGES_FOR_TRAINING:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Nombre insuffisant d'images valides. Au moins {settings.MIN_IMAGES_FOR_TRAINING} images sont requises."
+                detail=f"Nombre insuffisant d'images valides. Au moins {settings.MIN_IMAGES_FOR_TRAINING} images sont requises. {images_saved}/{len(images_base64)} images ont été validées."
             )
         
         return FaceCaptureResponse(

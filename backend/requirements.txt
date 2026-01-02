@@ -5,6 +5,7 @@ pandas>=2.2.0
 pillow>=10.0.0
 deepface>=0.0.79
 tensorflow>=2.13.0
+tf-keras>=2.20.0
 
 # FastAPI et dépendances
 fastapi>=0.109.0

@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store';
 import { attendanceService, studentService } from '../services';
 import { LoadingSpinner } from '../components';
 import MarkAttendance from '../components/MarkAttendance';
+import HeaderStudent from '../components/student/HeaderStudent';
 
 const StudentDashboard = () => {
-  const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
+  const { user, refreshUser, logout } = useAuth();
   const [stats, setStats] = useState(null);
   const [attendances, setAttendances] = useState([]);
   const [profile, setProfile] = useState(null);
@@ -44,21 +47,28 @@ const StudentDashboard = () => {
     loadDashboardData();
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   if (loading) {
     return <LoadingSpinner fullScreen />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <HeaderStudent user={user} onLogout={handleLogout} />
+      
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Welcome Section */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 mb-2">
                 Bonjour, {user?.full_name} 👋
               </h1>
-              <p className="text-gray-600">Tableau de bord étudiant</p>
+              <p className="text-gray-600">Bienvenue sur votre tableau de bord</p>
             </div>
             <button
               onClick={() => setShowMarkAttendance(!showMarkAttendance)}

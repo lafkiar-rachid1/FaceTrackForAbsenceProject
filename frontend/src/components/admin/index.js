@@ -1,0 +1,9 @@
+export { default as HeaderAdmin } from './HeaderAdmin';
+export { default as SideBarAdmin } from './SideBarAdmin';
+export { default as StatsCards } from './StatsCards';
+export { default as ProfessorsTab } from './ProfessorsTab';
+export { default as CoursesTab } from './CoursesTab';
+export { default as EnrollmentsTab } from './EnrollmentsTab';
+export { default as ProfessorModal } from './ProfessorModal';
+export { default as CourseModal } from './CourseModal';
+export { default as EnrollModal } from './EnrollModal';
