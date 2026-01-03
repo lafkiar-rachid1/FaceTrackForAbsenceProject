@@ -11,6 +11,9 @@ ENV/
 *.db
 *.sqlite3
 
+# Dataset (face recognition)
+dataset/
+
 # Node
 node_modules/
 dist/
