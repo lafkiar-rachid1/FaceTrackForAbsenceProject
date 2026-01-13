@@ -66,7 +66,7 @@ const Login = () => {
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <span className="text-xl mb-1 block">🎓</span>
+              <span className="text-xl mb-1 block"></span>
               <span className="text-sm">Étudiant</span>
             </button>
             <button
@@ -78,7 +78,7 @@ const Login = () => {
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <span className="text-xl mb-1 block">👨‍🏫</span>
+              <span className="text-xl mb-1 block"></span>
               <span className="text-sm">Admin/Prof</span>
             </button>
           </div>
