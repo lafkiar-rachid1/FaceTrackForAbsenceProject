@@ -211,7 +211,7 @@ SELECT
     SUM(CASE WHEN a.status = 'Présent' THEN 1 ELSE 0 END) as present_count,
     SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) as absent_count,
     ROUND(
-        (SUM(CASE WHEN a.status = 'Présent' THEN 1 ELSE 0 END)::FLOAT / 
+        (SUM(CASE WHEN a.status = 'Présent' THEN 1 ELSE 0 END)::NUMERIC / 
          NULLIF(COUNT(a.attendance_id), 0) * 100), 2
     ) as attendance_percentage
 FROM students s

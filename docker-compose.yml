@@ -1,0 +1,87 @@
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: facetrack_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: facetrack_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    networks:
+      - facetrack_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: facetrack_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/facetrack_db
+      SECRET_KEY: your-secret-key-change-in-production
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:80
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_models:/app/models
+      - backend_dataset:/app/dataset
+      - backend_attendance:/app/attendance
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - facetrack_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: facetrack_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - facetrack_network
+    environment:
+      VITE_API_URL: http://localhost:8000
+
+  # pgAdmin (optionnel - pour la gestion de la base de données)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: facetrack_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@facetrack.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - facetrack_network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+  backend_models:
+  backend_dataset:
+  backend_attendance:
+
+networks:
+  facetrack_network:
+    driver: bridge
