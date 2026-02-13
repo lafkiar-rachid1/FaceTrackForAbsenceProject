@@ -622,17 +622,6 @@ Réinitialisation de la base de données
 python reset_users.py
 # ⚠️ Supprime tous les utilisateurs !
 ```
-
-## 📊 Comptes de Test (après `create_test_users.py`)
-
-| Rôle | Username | Mot de passe |
-|------|----------|--------------|
-| Admin | `admin` | `admin123` |
-| Professeur | `prof.larbi` | `prof123` |
-| Professeur | `prof.amrani` | `prof123` |
-| Étudiant | `etudiant1` | `etu123` |
-| Étudiant | `etudiant2` | `etu123` |
-
 ## 🚦 Workflow Typique
 
 ### 1️⃣ Configuration Initiale (Admin)
@@ -723,30 +712,5 @@ cat frontend/.env
 # Vérifier CORS dans backend/config.py
 # S'assurer que l'URL du frontend est dans CORS_ORIGINS
 ```
-
-## 📝 Licence
-
-Ce projet est sous licence MIT. Voir le fichier LICENSE pour plus de détails.
-
-## 👥 Contributeurs
-
-- **Équipe de développement** - Développement initial
-- **ENSET** - Contexte académique
-
-## 🙏 Remerciements
-
-- OpenCV pour le traitement d'images
-- DeepFace pour la reconnaissance faciale
-- FastAPI pour le framework backend
-- React pour le framework frontend
-
-## 📧 Contact & Support
-
-Pour toute question ou support :
-- 📧 Email: support@facetrack.com
-- 🐛 Issues: [GitHub Issues](https://github.com/lafkiar-rachid1/FaceTrackForAbsenceProject/issues)
-- 📖 Documentation: [README_API.md](backend/README_API.md)
-
----
 
 **⭐ Si ce projet vous a aidé, n'oubliez pas de lui donner une étoile sur GitHub !**
