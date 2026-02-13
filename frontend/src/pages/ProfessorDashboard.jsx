@@ -51,6 +51,13 @@ const ProfessorDashboard = () => {
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
+    
+    // Validation côté client
+    if (sessionForm.end_time <= sessionForm.start_time) {
+      toast.error("L'heure de fin doit être après l'heure de début");
+      return;
+    }
+    
     try {
       await professorService.createSession(sessionForm);
       toast.success('Session créée avec succès');
@@ -58,7 +65,10 @@ const ProfessorDashboard = () => {
       setSessionForm({ course_id: '', session_date: '', start_time: '', end_time: '', location: '' });
       loadData();
     } catch (error) {
-      toast.error(error.detail || 'Erreur lors de la création');
+      // Meilleure gestion des erreurs du backend
+      const errorMessage = error.response?.data?.detail || error.message || 'Erreur lors de la création';
+      toast.error(errorMessage);
+      console.error('Erreur création session:', error);
     }
   };
 
