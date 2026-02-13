@@ -182,11 +182,7 @@ psql -U postgres -d facetrack_db -f init_db.sql
 4. **Configurer les variables d'environnement:**
 ```bash
 # Créer le fichier .env
-DATABASE_URL=postgresql://postgres:password@localhost:5432/facetrack_db
-SECRET_KEY=votre-clé-secrète-changez-en-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+vous trouver l'exemple dans .envexample que se soit dans le frentend ou le backend
 ```
 
 5. **Lancer le serveur:**
